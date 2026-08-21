@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        FIREGUARD | BFP Monitoring
+    </title>
+
+
+    <!-- Leaflet Map -->
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+
+    <!-- FIREGUARD CSS -->
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for(
+            'static',
+            filename='css/js/style.css'
+        ) }}"
+    >
+
+</head>
+
+
+<body>
+
+
+<!-- ========================= -->
+<!-- SIDEBAR -->
+<!-- ========================= -->
+
+<aside class="sidebar">
+
+    <div class="logo">
+
+        <div class="logo-icon">
+            <img
+                src="{{ url_for('static', filename='images/bfp-logo.png') }}"
+                alt="Bureau of Fire Protection seal"
+            >
+        </div>
+
+        <div>
+
+            <h2>
+                FIREGUARD
+            </h2>
+
+            <small>
+                BFP MONITORING
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <nav>
+
+        <a class="active" href="{{ url_for('dashboard') }}">
+            🏠 Dashboard
+        </a>
+
+        <a href="#active-alerts">
+            🚨 Active Alerts
+        </a>
+
+        <a href="#incident-map">
+            🗺️ Incident Map
+        </a>
+
+        <a href="#incident-history">
+            📋 Incident History
+        </a>
+
+        <a href="#monitoring-devices">
+            📡 Monitoring Devices
+        </a>
+
+        <a class="logout-link" href="{{ url_for('logout') }}">
+            ↪ Log Out
+        </a>
+
+    </nav>
+
+
+    <div class="system-status">
+
+        <span class="online-dot"></span>
+
+        System Online
+
+    </div>
+
+</aside>
+
+
+<!-- ========================= -->
+<!-- MAIN CONTENT -->
+<!-- ========================= -->
+
+<main class="main">
+
+
+    <!-- HEADER -->
+
+    <header class="header">
+
+        <div>
+
+            <h1>
+                Emergency Monitoring Dashboard
+            </h1>
+
+            <p>
+                Bureau of Fire Protection
+            </p>
+
+        </div>
+
+
+        <div class="header-right">
+
+            <span>
+                🔔
+            </span>
+
+            <span>
+                BFP Personnel
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- ========================= -->
+    <!-- ALERT BANNER -->
+    <!-- ========================= -->
+
+    <section
+        id="emergency-banner"
+        class="emergency-banner hidden"
+    >
+
+        🚨
+
+        <div>
+
+            <strong>
+                HIGH PRIORITY EMERGENCY
+            </strong>
+
+            <p id="banner-message">
+                Emergency detected.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- STATISTICS -->
+    <!-- ========================= -->
+
+    <section class="statistics">
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon red">
+                🔥
+            </div>
+
+            <div>
+
+                <span>
+                    Fire Alerts
+                </span>
+
+                <strong id="fire-count">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon orange">
+                💨
+            </div>
+
+            <div>
+
+                <span>
+                    Gas Alerts
+                </span>
+
+                <strong id="gas-count">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon yellow">
+                ⚠️
+            </div>
+
+            <div>
+
+                <span>
+                    High Severity
+                </span>
+
+                <strong id="high-count">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon blue">
+                📡
+            </div>
+
+            <div>
+
+                <span>
+                    Active Devices
+                </span>
+
+                <strong>
+                    1
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- MAP + ALERTS -->
+    <!-- ========================= -->
+
+    <section class="content-grid">
+
+
+        <!-- MAP -->
+
+        <div class="panel map-panel" id="incident-map">
+
+            <div class="panel-title">
+
+                <div>
+
+                    <h2>
+                        Incident Map
+                    </h2>
+
+                    <p>
+                        Real-time emergency locations
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div id="map"></div>
+
+        </div>
+
+
+        <!-- ALERTS -->
+
+        <div class="panel alerts-panel" id="active-alerts">
+
+            <div class="panel-title">
+
+                <div>
+
+                    <h2>
+                        Latest Alerts
+                    </h2>
+
+                    <p>
+                        Recent emergency events
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="alerts-list"
+                class="alerts-list"
+            >
+
+                <div class="no-alerts">
+
+                    No active alerts
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- SIMULATION -->
+    <!-- ========================= -->
+
+    <section class="panel simulation">
+
+        <div>
+
+            <h2>
+                System Testing
+            </h2>
+
+            <p>
+                Simulate sensor events before
+                connecting the Arduino.
+            </p>
+
+        </div>
+
+
+        <div class="simulation-buttons">
+
+            <button
+                class="fire-button"
+                onclick="simulateFire()"
+            >
+                🔥 Simulate Fire
+            </button>
+
+
+            <button
+                class="gas-button"
+                onclick="simulateGas()"
+            >
+                💨 Simulate Gas
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- INCIDENT TABLE -->
+    <!-- ========================= -->
+
+    <section class="panel incidents-panel" id="incident-history">
+
+        <div class="panel-title">
+
+            <div>
+
+                <h2>
+                    Incident Records
+                </h2>
+
+                <p>
+                    Emergency incident database
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Incident
+                        </th>
+
+                        <th>
+                            Type
+                        </th>
+
+                        <th>
+                            Severity
+                        </th>
+
+                        <th>
+                            Sensor
+                        </th>
+
+                        <th>
+                            Location
+                        </th>
+
+                        <th>
+                            Status
+                        </th>
+
+                        <th>
+                            Time
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="incident-table">
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- MONITORING DEVICES -->
+    <!-- ========================= -->
+
+    <section class="panel devices-panel" id="monitoring-devices">
+
+        <div class="panel-title">
+
+            <div>
+
+                <h2>
+                    Monitoring Devices
+                </h2>
+
+                <p>
+                    Connected field equipment
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="device-row">
+
+            <div class="device-status">
+                <span class="online-dot"></span>
+                <div>
+                    <strong>FG-001</strong>
+                    <small>Fire and gas sensor station</small>
+                </div>
+            </div>
+
+            <span class="device-online">Online</span>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+<!-- Leaflet -->
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
+
+
+<!-- FIREGUARD JavaScript -->
+
+<script
+    src="{{ url_for(
+        'static',
+            filename='css/js/dashboard.js'
+    ) }}"
+></script>
+
+
+</body>
+
+</html>
