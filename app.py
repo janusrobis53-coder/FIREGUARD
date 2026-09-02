@@ -1,6 +1,9 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for, session
+from flask import Flask, render_template, jsonify, request, redirect, url_for, session, Response
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+from picamera2 import Picamera2
+import cv2
+import time
 import os
 import uuid
 
@@ -26,6 +29,64 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
+
+
+# ==========================================
+# CAMERA MODULE 3
+# ==========================================
+
+camera = Picamera2()
+
+camera_config = camera.create_video_configuration(
+    main={"size": (1280, 720), "format": "RGB888"}
+)
+
+camera.configure(camera_config)
+camera.start()
+
+time.sleep(2)
+
+
+# ==========================================
+# LIVE CAMERA STREAM
+# ==========================================
+
+def generate_frames():
+
+    while True:
+
+        frame = camera.capture_array()
+
+        frame = cv2.cvtColor(
+            frame,
+            cv2.COLOR_RGB2BGR
+        )
+
+        success, buffer = cv2.imencode(
+            ".jpg",
+            frame
+        )
+
+        if not success:
+            continue
+
+        frame_bytes = buffer.tobytes()
+
+        yield (
+            b"--frame\r\n"
+            b"Content-Type: image/jpeg\r\n\r\n"
+            + frame_bytes +
+            b"\r\n"
+        )
+
+
+@app.route("/video_feed")
+def video_feed():
+
+    return Response(
+        generate_frames(),
+        mimetype="multipart/x-mixed-replace; boundary=frame"
+    )
 
 
 # ==========================================
@@ -109,17 +170,37 @@ def login():
 
         expected_username = os.environ.get("FIREGUARD_USERNAME", "admin")
         expected_password = os.environ.get("FIREGUARD_PASSWORD", "fireguard")
+        homeowner_username = os.environ.get(
+            "FIREGUARD_HOMEOWNER_USERNAME",
+            "homeowner"
+        )
+        homeowner_password = os.environ.get(
+            "FIREGUARD_HOMEOWNER_PASSWORD",
+            "fireguard"
+        )
 
         if username == expected_username and password == expected_password:
 
             session["authenticated"] = True
+            session["role"] = "bfp"
 
             return redirect(url_for("dashboard"))
+
+        if username == homeowner_username and password == homeowner_password:
+
+            session["authenticated"] = True
+            session["role"] = "homeowner"
+
+            return redirect(url_for("homeowner_dashboard"))
 
         return render_template(
             "login.html",
             error="The username or password is incorrect."
         ), 401
+
+    if session.get("authenticated") and session.get("role") == "homeowner":
+
+        return redirect(url_for("homeowner_dashboard"))
 
     if session.get("authenticated"):
 
@@ -131,7 +212,10 @@ def login():
 @app.route("/dashboard")
 def dashboard():
 
-    if not session.get("authenticated"):
+    if (
+        not session.get("authenticated") or
+        session.get("role") != "bfp"
+    ):
 
         return redirect(url_for("login"))
 
@@ -149,12 +233,50 @@ def dashboard():
     )
 
 
+@app.route("/homeowner")
+def homeowner_dashboard():
+
+    if (
+        not session.get("authenticated") or
+        session.get("role") != "homeowner"
+    ):
+
+        return redirect(url_for("login"))
+
+    return render_template("homeowner.html")
+
+
+@app.route("/camera")
+def camera_page():
+
+    if not session.get("authenticated"):
+        return redirect(url_for("login"))
+
+    return render_template("camera.html")
+
+
 @app.route("/logout")
 def logout():
 
     session.clear()
 
     return redirect(url_for("login"))
+
+
+@app.route("/video_feed")
+def video_feed():
+
+    if not camera_available:
+        return Response(
+            "Camera unavailable.",
+            mimetype="text/plain",
+            status=503
+        )
+
+    return Response(
+        generate_frames(),
+        mimetype="multipart/x-mixed-replace; boundary=frame"
+    )
 
 
 # ==========================================
@@ -215,6 +337,47 @@ def get_incidents():
         })
 
     return jsonify(data)
+
+
+# ==========================================
+# RESOLVE FIRE INCIDENT
+# ==========================================
+
+@app.route("/api/incidents/<int:incident_id>/resolve", methods=["POST"])
+def resolve_incident(incident_id):
+
+    if not session.get("authenticated"):
+
+        return jsonify({
+            "success": False,
+            "message": "Authentication required."
+        }), 401
+
+    incident = db.session.get(Incident, incident_id)
+
+    if incident is None:
+
+        return jsonify({
+            "success": False,
+            "message": "Incident not found."
+        }), 404
+
+    if incident.hazard_type != "FIRE":
+
+        return jsonify({
+            "success": False,
+            "message": "Only fire incidents can be resolved here."
+        }), 400
+
+    incident.status = "RESOLVED"
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Fire marked as extinguished.",
+        "status": incident.status
+    })
 
 
 # ==========================================

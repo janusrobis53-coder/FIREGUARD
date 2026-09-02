@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIREGUARD | Homeowner Safety</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='homeowner.css') }}">
+</head>
+<body>
+    <main class="homeowner-shell">
+        <header class="homeowner-header">
+            <div class="brand">
+                <img src="{{ url_for('static', filename='images/bfp-logo.png') }}" alt="Bureau of Fire Protection seal">
+                <div>
+                    <strong>FIREGUARD</strong>
+                    <span>Homeowner safety portal</span>
+                </div>
+            </div>
+            <a class="logout" href="{{ url_for('logout') }}">Log out</a>
+        </header>
+
+        <section class="welcome-section">
+            <div>
+                <p class="eyebrow">Your household safety view</p>
+                <h1>Stay informed.<br><em>Stay safe.</em></h1>
+                <p class="welcome-copy">Live updates from the BFP monitoring network for Santo Tomas, Davao del Norte.</p>
+            </div>
+            <div class="network-status"><span></span> Monitoring network online</div>
+        </section>
+
+        <section class="safety-grid" aria-label="Safety overview">
+            <article class="status-card status-card-primary">
+                <span class="card-label">Current status</span>
+                <strong id="safety-status">Checking area...</strong>
+                <p id="safety-message">Connecting to the latest incident updates.</p>
+            </article>
+            <article class="status-card">
+                <span class="card-label">Active fire alerts</span>
+                <strong id="fire-count">0</strong>
+                <p>Unresolved fire incidents nearby</p>
+            </article>
+            <article class="status-card">
+                <span class="card-label">Last updated</span>
+                <strong id="last-updated">--:--</strong>
+                <p>Automatic updates every 5 seconds</p>
+            </article>
+        </section>
+
+        <section class="content-grid">
+            <article class="panel alerts-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Live information</p>
+                        <h2>Community alerts</h2>
+                    </div>
+                    <span class="live-badge">LIVE</span>
+                </div>
+                <div id="alerts-list" class="alerts-list">
+                    <p class="empty-state">Loading alerts...</p>
+                </div>
+            </article>
+
+            <article class="panel camera-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Visual check</p>
+                        <h2>Live footage</h2>
+                    </div>
+                    <span id="camera-status" class="camera-badge">OFFLINE</span>
+                </div>
+                <div class="camera-frame">
+                    <video id="camera-feed" autoplay muted playsinline></video>
+                    <div id="camera-placeholder" class="camera-placeholder">
+                        <span class="camera-symbol">&#9673;</span>
+                        <strong>Camera is not connected</strong>
+                        <p>Start the camera to check your property.</p>
+                    </div>
+                </div>
+                <div class="camera-controls">
+                    <button id="camera-start" type="button">Start camera</button>
+                    <button id="camera-stop" type="button" disabled>Stop</button>
+                </div>
+                <p id="camera-message" class="camera-message">Camera access stays on this device.</p>
+            </article>
+
+            <aside class="panel preparedness-panel">
+                <p class="eyebrow">Be prepared</p>
+                <h2>What to do during an alert</h2>
+                <ol>
+                    <li>Stay calm and follow official BFP instructions.</li>
+                    <li>Move away from smoke and keep exits clear.</li>
+                    <li>Call emergency services if anyone is in danger.</li>
+                </ol>
+                <div class="emergency-note">
+                    <span>Emergency hotline</span>
+                    <strong>911</strong>
+                </div>
+            </aside>
+
+            <article class="panel hotlines-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">Need help?</p>
+                        <h2>Emergency hotlines</h2>
+                    </div>
+                    <span class="live-badge">24/7</span>
+                </div>
+                <div class="hotline-groups">
+                    <div class="hotline-group">
+                        <strong>PNP</strong>
+                        <a href="tel:09677039787">TM <span>0967 703 9787</span></a>
+                        <a href="tel:09072085978">Smart <span>0907 208 5978</span></a>
+                    </div>
+                    <div class="hotline-group">
+                        <strong>BFP</strong>
+                        <a href="tel:09202689258">Smart <span>0920 268 9258</span></a>
+                        <a href="tel:0846456901">Landline <span>(084) 645-6901</span></a>
+                    </div>
+                    <div class="hotline-group">
+                        <strong>MDRRMO</strong>
+                        <a href="tel:09951537229">Globe <span>0995 153 7229</span></a>
+                        <a href="tel:09588807079">Smart <span>0958 880 7079</span></a>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <footer>FIREGUARD safety information is provided for awareness. Follow instructions from responding BFP personnel.</footer>
+    </main>
+    <script src="{{ url_for('static', filename='homeowner.js') }}"></script>
+</body>
+</html>

@@ -826,3 +826,37 @@ nav a.logout-link:hover {
     }
 
 }
+
+
+.resolve-fire-button {
+
+    width: 100%;
+
+    margin-top: 14px;
+
+    padding: 9px 12px;
+
+    border: 1px solid #b91c1c;
+
+    border-radius: 5px;
+
+    color: white;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    background: #dc2626;
+
+    cursor: pointer;
+
+}
+
+
+.resolve-fire-button:hover {
+
+    background: #b91c1c;
+
+}
+
+

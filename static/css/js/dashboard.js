@@ -7,7 +7,7 @@ const map = L.map("map").setView(
     13
 );
 
-const bfpStation = [7.537, 125.620];
+const bfpStation = [7.5344125, 125.623671875];
 
 const fireIcon = L.divIcon({
     className: "fire-map-icon",
@@ -135,22 +135,27 @@ async function loadIncidents() {
             // MAP MARKER
             // ==================================
 
-            const marker =
-                L.marker([
-                    incident.latitude,
-                    incident.longitude
-                ], {
-                    icon: incident.hazard_type === "FIRE"
-                        ? fireIcon
-                        : gasIcon,
-                    zIndexOffset: incident.hazard_type === "FIRE"
-                        ? 1000
-                        : 500
-                })
-                .addTo(map);
+            if (!(
+                incident.hazard_type === "FIRE" &&
+                incident.status === "RESOLVED"
+            )) {
+
+                const marker =
+                    L.marker([
+                        incident.latitude,
+                        incident.longitude
+                    ], {
+                        icon: incident.hazard_type === "FIRE"
+                            ? fireIcon
+                            : gasIcon,
+                        zIndexOffset: incident.hazard_type === "FIRE"
+                            ? 1000
+                            : 500
+                    })
+                    .addTo(map);
 
 
-            marker.bindPopup(`
+                marker.bindPopup(`
 
                 <strong>
                     ${incident.hazard_type}
@@ -176,10 +181,12 @@ async function loadIncidents() {
                 Status:
                 ${incident.status}
 
-            `);
+                `);
 
 
-            mapLayers.push(marker);
+                mapLayers.push(marker);
+
+            }
 
 
             // ==================================
@@ -228,6 +235,18 @@ async function loadIncidents() {
                         ${incident.device_id}
 
                     </div>
+
+                    ${
+                        incident.hazard_type === "FIRE" &&
+                        incident.status !== "RESOLVED"
+                        ? `<button
+                                class="resolve-fire-button"
+                                onclick="resolveFire(${incident.id})"
+                           >
+                                Confirm fire extinguished
+                           </button>`
+                        : ""
+                    }
 
                 </div>
 
@@ -429,6 +448,47 @@ async function loadIncidents() {
             "Error loading incidents:",
             error
         );
+
+    }
+
+}
+
+
+// ==========================================
+// CONFIRM FIRE EXTINGUISHED
+// ==========================================
+
+async function resolveFire(incidentId) {
+
+    if (!confirm("Confirm that BFP has extinguished this fire?")) {
+
+        return;
+
+    }
+
+    try {
+
+        const response = await fetch(
+            `/api/incidents/${incidentId}/resolve`,
+            { method: "POST" }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+
+            throw new Error(data.message || "Unable to resolve fire.");
+
+        }
+
+        await loadIncidents();
+
+    }
+
+    catch (error) {
+
+        console.error("Error resolving fire:", error);
+        alert("The fire could not be marked as extinguished.");
 
     }
 
